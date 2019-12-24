@@ -68,16 +68,16 @@ def extract_frames(video, outDir):
 
 
     error = ""
-    print('{} -i {} -vsync 0 {}/%06d.png'.format(os.path.join(args.ffmpeg_dir, "ffmpeg"), video, outDir))
-    retn = os.system('{} -i "{}" -vsync 0 {}/%06d.png'.format(os.path.join(args.ffmpeg_dir, "ffmpeg"), video, outDir))
+    print('{} -i {} -vsync 0 {}/%06d.png'.format("ffmpeg", video, outDir))
+    retn = os.system('{} -i "{}" -vsync 0 {}/%06d.png'.format("ffmpeg", video, outDir))
     if retn:
         error = "Error converting file:{}. Exiting.".format(video)
     return error
 
 def create_video(dir):
     error = ""
-    print('{} -r {} -i {}/%d.png -vcodec ffvhuff {}'.format(os.path.join(args.ffmpeg_dir, "ffmpeg"), args.fps, dir, args.output))
-    retn = os.system('{} -r {} -i {}/%d.png -vcodec ffvhuff "{}"'.format(os.path.join(args.ffmpeg_dir, "ffmpeg"), args.fps, dir, args.output))
+    print('{} -r {} -i {}/%d.png -vcodec ffvhuff {}'.format("ffmpeg", args.fps, dir, args.output))
+    retn = os.system('{} -r {} -i {}/%d.png -vcodec ffvhuff "{}"'.format("ffmpeg", args.fps, dir, args.output))
     if retn:
         error = "Error creating output video. Exiting."
     return error
@@ -169,7 +169,9 @@ def main():
 
             # Save reference frames in output folder
             for batchIndex in range(args.batch_size):
-                (TP(frame0[batchIndex].detach())).resize(videoFrames.origDim, Image.BILINEAR).save(os.path.join(outputPath, str(frameCounter + args.sf * batchIndex) + ".png"))
+                a=(TP(frame0[batchIndex].detach())).resize(videoFrames.origDim, Image.BILINEAR)
+                pngname='%06d'%int(frameCounter+args.sf*batchIndex)
+                a.save(os.path.join(outputPath, str(pngname) + ".png"))
             frameCounter += 1
 
             # Generate intermediate frames
@@ -200,7 +202,9 @@ def main():
 
                 # Save intermediate frame
                 for batchIndex in range(args.batch_size):
-                    (TP(Ft_p[batchIndex].cpu().detach())).resize(videoFrames.origDim, Image.BILINEAR).save(os.path.join(outputPath, str(frameCounter + args.sf * batchIndex) + ".png"))
+                    a=(TP(Ft_p[batchIndex].cpu().detach())).resize(videoFrames.origDim, Image.BILINEAR)
+                    pngname='%06d'%int(frameCounter+args.sf*batchIndex)
+                    a.save(os.path.join(outputPath, str(pngname) + ".png"))
                 frameCounter += 1
 
             # Set counter accounting for batching of frames
