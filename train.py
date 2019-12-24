@@ -41,14 +41,16 @@ args = parser.parse_args()
 ### For visualizing loss and interpolated frames
 
 if args.distributed:
-    summary_writter = tensorboardX.SummaryWriter(log_dir='/ouput/tf_dir/', str(hvd.rank()))
+    hvd.init()
+    torch.cuda.set_device(hvd.local_rank())
+    writer = tensorboardX.SummaryWriter('/ouput/tf_dir/',str(hvd.rank()))
 else:
     writer = SummaryWriter('/output/tf_dir')
 
 ###Initialize flow computation and arbitrary-time flow interpolation CNNs.
 
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 flowComp = model.UNet(6, 4)
 flowComp.to(device)
 ArbTimeFlowIntrp = model.UNet(20, 5)
@@ -80,9 +82,9 @@ validationset = dataloader.SuperSloMo(root=args.dataset_root + '/validation', tr
 validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.validation_batch_size, shuffle=False)
 
 if args.distributed:
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, num_replicas=hvd.size(),
+    train_sampler = torch.utils.data.distributed.DistributedSampler(trainset, num_replicas=hvd.size(),
                                                                     rank=hvd.rank())
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.train_batch_size, sampler=, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.train_batch_size, sampler=train_sampler, shuffle=True)
 print(trainset, validationset)
 
 ###Create transform to display image from tensor
@@ -110,8 +112,14 @@ params = list(ArbTimeFlowIntrp.parameters()) + list(flowComp.parameters())
 
 optimizer = optim.Adam(params, lr=args.init_learning_rate)
 if args.distributed:
-    optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=model.named_parameters())
-    hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+    tmp_parameters=[]
+    for name,parameters in ArbTimeFlowIntrp.named_parameters():
+        tmp_parameters.append(('%s_0'%name,parameters))
+    for name,parameters in flowComp.named_parameters():
+        tmp_parameters.append(('%s_1'%name,parameters))
+    optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=tmp_parameters)
+    hvd.broadcast_parameters(ArbTimeFlowIntrp.state_dict(), root_rank=0)
+    hvd.broadcast_parameters(flowComp.state_dict(), root_rank=0)
 
 # scheduler to decrease learning rate by a factor of 10 at milestones.
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=0.1)

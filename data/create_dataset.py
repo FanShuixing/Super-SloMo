@@ -6,7 +6,7 @@ import random
 
 # For parsing commandline arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--ffmpeg_dir", type=str, required=True, help='path to ffmpeg.exe')
+parser.add_argument("--ffmpeg_dir", type=str, help='path to ffmpeg.exe')
 parser.add_argument("--dataset", type=str, default="custom", help='specify if using "adobe240fps" or custom video dataset')
 parser.add_argument("--videos_folder", type=str, required=True, help='path to the folder containing videos')
 parser.add_argument("--dataset_folder", type=str, required=True, help='path to the output dataset folder')
