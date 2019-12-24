@@ -14,7 +14,7 @@ from math import log10
 import datetime
 from tensorboardX import SummaryWriter
 import horovod.torch as hvd
-
+import os
 # For parsing commandline arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset_root", type=str, required=True,
@@ -28,7 +28,9 @@ parser.add_argument("--train_batch_size", type=int, default=6, help='batch size 
 parser.add_argument("--validation_batch_size", type=int, default=10, help='batch size for validation. Default: 10.')
 parser.add_argument("--init_learning_rate", type=float, default=0.0001,
                     help='set initial learning rate. Default: 0.0001.')
-parser.add_argument("--milestones", type=list, default=[100, 150],
+# parser.add_argument("--milestones", type=list, default=[100, 150],
+#                     help='Set to epoch values where you want to decrease learning rate by a factor of 0.1. Default: [100, 150]')
+parser.add_argument("--milestones", type=int,nargs='+', default=[100, 150],
                     help='Set to epoch values where you want to decrease learning rate by a factor of 0.1. Default: [100, 150]')
 parser.add_argument("--progress_iter", type=int, default=100,
                     help='frequency of reporting progress and validation. N: after every N iterations. Default: 100.')
@@ -39,6 +41,9 @@ args = parser.parse_args()
 
 ##[TensorboardX](https://github.com/lanpa/tensorboardX)
 ### For visualizing loss and interpolated frames
+
+if not os.path.exists('/output/tf_dir'):
+    os.mkdir('/output/tf_dir')
 
 if args.distributed:
     hvd.init()
