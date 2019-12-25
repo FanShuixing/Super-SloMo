@@ -48,7 +48,7 @@ if not os.path.exists('/output/tf_dir'):
 if args.distributed:
     hvd.init()
     torch.cuda.set_device(hvd.local_rank())
-    writer = tensorboardX.SummaryWriter('/ouput/tf_dir/',str(hvd.rank()))
+    writer =SummaryWriter(log_dir=os.path.join('/ouput/tf_dir/', str(hvd.rank())))
 else:
     writer = SummaryWriter('/output/tf_dir')
 
