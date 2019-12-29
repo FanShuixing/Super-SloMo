@@ -89,7 +89,7 @@ validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.va
 if args.distributed:
     train_sampler = torch.utils.data.distributed.DistributedSampler(trainset, num_replicas=hvd.size(),
                                                                     rank=hvd.rank())
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.train_batch_size, sampler=train_sampler, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.train_batch_size, sampler=train_sampler)
 print(trainset, validationset)
 
 ###Create transform to display image from tensor
